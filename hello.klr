@@ -17,15 +17,12 @@ A first ruleset for the Quickstart
     };
  
   }
-  rule hello_world {
+  rule hello {
     select when echo hello
     send_directive("say") with
       something = "Hello World";
   }
   
-  rule hello {
-  
-  }
   
   rule message {
   

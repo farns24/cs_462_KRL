@@ -27,10 +27,10 @@ A first ruleset for the Quickstart
       pre{
         passed_input = event:attr("input").klog("our passed in Input: ");
       }
-      {
+      
         send_directive("say") with
           something = passed_input;
-      }
+      
       always{
         set ent:name passed_name;
       }

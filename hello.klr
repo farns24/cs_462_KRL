@@ -32,7 +32,7 @@ A first ruleset for the Quickstart
           something = passed_input;
       
       always{
-        set ent:name passed_name;
+        set ent:name passed_name
       }
 
     }

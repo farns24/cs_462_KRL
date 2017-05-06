@@ -22,4 +22,10 @@ A first ruleset for the Quickstart
       something = "Hello World"
   }
   
+    rule message {
+    select when echo hello
+    send_directive("say") with
+      something = "Hello World"
+  }
+  
 }

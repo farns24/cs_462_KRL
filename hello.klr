@@ -22,7 +22,7 @@ A first ruleset for the Quickstart
       something = "Hello World"
   }
   
-   rule store_name {
+   rule message {
   select when echo message
   pre{
     passed_input = event:attr("input").klog("our passed in Input: ");

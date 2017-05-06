@@ -21,13 +21,13 @@ A first ruleset for the Quickstart
     send_directive("say") with
       something = "Hello World"
   }
-  
- rule message {
-  select when echo message
-     passed_name = event:attr("input").klog("our passed in Name: ")
-     send_directive("say") with
-     name = passed_name;
-  
-  }
+
+  rule message {
+    select when echo message input re#(.*)# setting(m);
+  send_directive("say") with
+    something = m
+    }
+
+
  }
 

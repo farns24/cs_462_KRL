@@ -23,9 +23,15 @@ A first ruleset for the Quickstart
   }
   
     rule message {
-    select when echo message
-    send_directive("say") with
-      something = "My Message"
-  }
+      select when echo message
+      pre{
+        passed_input = event:attr("input").klog("our passed in Input: ");
+      }
+      {
+        send_directive("say") with
+          something = passed_input;
+      }
+
+    }
   
 }

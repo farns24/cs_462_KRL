@@ -23,9 +23,9 @@ A first ruleset for the Quickstart
   }
   
     rule message {
-    select when echo hello
+    select when echo message
     send_directive("say") with
-      something = "Hello World"
+      something = "My Message"
   }
   
 }

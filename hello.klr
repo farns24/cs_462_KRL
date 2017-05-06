@@ -24,16 +24,10 @@ A first ruleset for the Quickstart
   
  rule message {
   select when hello message
-  pre{
-    passed_name = event:attr("input").klog("our passed in Name: ");
-  }
-  {
-    send_directive("say") with
-      name = passed_name;
-  }
-  always{
-    set ent:name passed_name;
-  }
+  passed_name = event:attr("input").klog("our passed in Name: ");
+  send_directive("say") with
+     name = passed_name;
+  
 }
   
 

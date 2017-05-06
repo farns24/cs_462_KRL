@@ -23,16 +23,16 @@ A first ruleset for the Quickstart
   }
   
    rule store_name {
-  select when hello name
+  select when echo message
   pre{
-    passed_name = event:attr("name").klog("our passed in Name: ");
+    passed_input = event:attr("input").klog("our passed in Input: ");
   }
   {
-    send_directive("store_name") with
-      name = passed_name;
+    send_directive("say") with
+      name = passed_input;
   }
   always{
-    set ent:name passed_name;
+    set ent:name passed_input;
   }
 }
   

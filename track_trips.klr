@@ -2,6 +2,7 @@ ruleset track_trips {
   meta {
     name "Track Trips"
     author "Michael Farnsworth"
+    description "tracktrips"
     logging on
     shares hello
   }
@@ -18,6 +19,5 @@ ruleset track_trips {
      passed_name = event:attr("mileage").klog("Mileage: ")
      send_directive("trip") with
      length = passed_name;
-  
   }
  }

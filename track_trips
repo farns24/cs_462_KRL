@@ -1,0 +1,23 @@
+ruleset track_trips {
+  meta {
+    name "Track Trips"
+    author "Michael Farnsworth"
+    logging on
+    shares hello
+  }
+  }
+  global {
+    hello = function(obj) {
+      msg = "Hello " + obj;
+      msg
+    }
+  }
+  
+ rule message {
+  select when echo message
+     passed_name = event:attr("mileage").klog("Mileage: ")
+     send_directive("trip") with
+     length = passed_name;
+  
+  }
+ }

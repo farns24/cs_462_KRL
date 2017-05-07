@@ -15,9 +15,8 @@ ruleset track_trips {
   }
   
  rule message {
-  select when echo message
-     passed_name = event:attr("mileage").klog("Mileage: ")
-     send_directive("trip") with
-     length = passed_name;
+  select when echo message mileage re#(.*)# setting(m);
+  send_directive("trip") with
+    length = m
   }
  }

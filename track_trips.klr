@@ -2,7 +2,7 @@ ruleset track_trips {
   meta {
     name "Track Trips"
     author "Michael Farnsworth"
-    description "tracktrips"
+    description <<tracktrips>>
     logging on
     shares hello
   }

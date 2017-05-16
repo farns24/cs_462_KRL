@@ -24,24 +24,24 @@ ruleset trip_store {
     
     short_trips = function() {
       trips = ent:trips;
-      shortrip = {"time Stamp": 0};
+      shor = {};
       trips.map(function(k,v) {
-          shortrip.put(k,v) if v< long_trip;
+          shor.put(k,v) if v< long_trip;
       })
-      shortrip
+      shor
     }
   }
   
  rule collect_trips {
   select when explicit processed_trip
   always {
-        ent:trips.put(time.now(),m)
+        ent:trips.defaultsTo({}).put(time.now(),m)
       }
   }
  rule collect_long_trips {
     select when explicit found_long_trip mileage re#(.*)# setting(m);
     always {
-        ent:long_trips.put(time.now(),m)
+        ent:long_trips.defaultsTo({}).put(time.now(),m)
       }
   }
   

@@ -24,11 +24,11 @@ ruleset trip_store {
     
     short_trips = function() {
       trips = ent:trips
-      short_trips = {}
+      short_trip = {}
       trips.map(function(k,v) {
           short_trips.put(k,v) if v< long_trip
       })
-      short_trips
+      short_trip
     }
   }
   

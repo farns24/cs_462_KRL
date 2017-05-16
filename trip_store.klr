@@ -5,6 +5,8 @@ ruleset trip_store {
     description <<tracktrips>>
     logging on
     shares hello
+    sharing on
+    provides trips, long_trips, short_trips
   }
   
   global {

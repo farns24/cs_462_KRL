@@ -23,10 +23,10 @@ ruleset trip_store {
     }
     
     short_trips = function() {
-      trips = ent:trips
-      shortrip = {"time Stamp": 0}
+      trips = ent:trips;
+      shortrip = {"time Stamp": 0};
       trips.map(function(k,v) {
-          shortrip.put(k,v) if v< long_trip
+          shortrip.put(k,v) if v< long_trip;
       })
       shortrip
     }

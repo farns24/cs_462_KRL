@@ -12,11 +12,18 @@ ruleset track_trips {
       msg = "Hello " + obj;
       msg
     }
+    long_trip = 1000
   }
   
  rule process_trip {
-  select when car new_trip mileage re#(.*)# setting(m);
-  send_directive("trip") with
-    length = m
+  select when car new_trip ;
+    raise explicit event "trip_processed"
+      attributes event:attrs()
   }
+ rule find_long_trips {
+    select when explicit:trip_processed mileage re#(.*)# setting(m);
+      raise explicit event "found_long_trip" if m >= long_trip
+      
+  }
+  
  }

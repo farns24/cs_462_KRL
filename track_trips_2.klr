@@ -16,7 +16,7 @@ ruleset track_trips {
   }
   
  rule process_trip {
-  select when car new_trip ;
+  select when car new_trip
     raise explicit event "trip_processed"
       attributes event:attrs()
   }

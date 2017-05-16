@@ -17,8 +17,10 @@ ruleset track_trips {
   
  rule process_trip {
   select when car new_trip
-    raise explicit event "trip_processed"
-      attributes event:attrs()
+  fired {
+      raise explicit event "trip_processed"
+        attributes event:attrs()
+      }
   }
  rule find_long_trips {
     select when explicit:trip_processed mileage re#(.*)# setting(m);

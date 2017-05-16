@@ -27,7 +27,7 @@ ruleset trip_store {
       shor = {};
       trips.map(function(k,v) {
          if (v < long_trip) {shor.put(k,v)}
-      })
+      });
       shor
     }
   }
@@ -48,7 +48,7 @@ ruleset trip_store {
   rule clear_trips {
     select when car trip_reset;
     always {
-        ent:trips := {}
+        ent:trips := {};
         ent:long_trips := {}
       }
   }

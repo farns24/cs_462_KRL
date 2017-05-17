@@ -1,0 +1,32 @@
+ruleset manage_fleet {
+  meta {
+    name "Hello World"
+    description <<
+A first ruleset for the Quickstart
+>>
+    author "Michael Farnsworth"
+    logging on
+    shares vehicles
+  }
+  
+  global {
+    vehicles = function() {
+        //Share subscription of all known vehicles
+    }
+    
+    trips = function() {
+    
+    }
+    
+  }
+  
+  rule create_vehicle {
+    select when car new_vehicle
+    //create new pico
+  }
+
+  rule delete_vehicle {
+    select when car unneeded_vehicle
+  
+    }
+ }

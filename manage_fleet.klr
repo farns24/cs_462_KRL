@@ -1,5 +1,6 @@
 ruleset manage_fleet {
   meta {
+    use module v1_wrangler alias wrangler
     name "Hello World"
     description <<
 A first ruleset for the Quickstart
@@ -10,8 +11,14 @@ A first ruleset for the Quickstart
   }
   
   global {
+     
+    parent = function(){
+      ent:parent.defaultsTo({})
+    }
+
     vehicles = function() {
         //Share subscription of all known vehicles
+         wrangler:children();
     }
     
     trips = function() {
@@ -22,11 +29,38 @@ A first ruleset for the Quickstart
   
   rule create_vehicle {
     select when car new_vehicle
-    //create new pico
+    pre {
+       vid = ent:vId.defaultsTo(0);
+       random_name = "Vehicle_" +  vid;
+       name  = event:attr("name").defaultsTo(random_name);
+    }
+    
+        wrangler:createChild(name) 
+    always{
+       log("create vehicle" + name);
+    ent:vId := vid +1;
+    }
+
   }
 
+  
   rule delete_vehicle {
     select when car unneeded_vehicle
-  
+    
+     pre {
+        name = event:attr("name");
+     }
+     if (not name.isnull()) then 
+         wrangler:deleteChild(name)
+     
+     fired {
+        log(name + " deleted");
+     }
+     else
+     {
+         log("No child named " + name);
+     }
+
     }
+
  }

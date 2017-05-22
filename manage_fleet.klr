@@ -36,13 +36,9 @@ ruleset manage_fleet {
       eci = "default"
     }
     {
-      wrangler:createChild(name);
-       wrangler:children().map(function(v){
-       		if (v.name == name)
-		then {
-			eci = v.eci
-		}
-       		});
+      child = wrangler:createChild(name);
+      log(child);
+       
     }
     always{
       

@@ -1,7 +1,7 @@
 ruleset manage_fleet {
   meta {
     use module v1_wrangler alias wrangler
-    name "Hello World"
+    name "Fleet Manager"
     description <<
 A first ruleset for the Quickstart
 >>

@@ -36,9 +36,9 @@ ruleset manage_fleet {
       eci = "default"
     }
     {
-      child = wrangler:createChild(name);
+      wrangler:createChild(name);
       log(child);
-       
+      eci = eciFromName(name); 
     }
     always{
       

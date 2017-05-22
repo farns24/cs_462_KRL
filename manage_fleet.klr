@@ -72,6 +72,7 @@ ruleset manage_fleet {
 
     pre {
       new_eci = wrangler:eciFromName(event:attr("subscriber_name"));
+      log("New ECI " + new_eci);
       sub_attrs = {
         "name": event:attr("name"),
 	"name_space": "Fleet",

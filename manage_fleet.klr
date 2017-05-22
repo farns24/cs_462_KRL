@@ -32,20 +32,22 @@ ruleset manage_fleet {
     select when car new_vehicle
     pre{
       random_name = "Vehicle_" + math:random(999);
-      name = event:attr("name").defaultsTo(random_name);
+      childname = event:attr("name").defaultsTo(random_name);
       
     }
     {
-      wrangler:createChild(name);
+      wrangler:createChild(childname);
       log(child); 
     }
     always{
       log("create child names " + name);
-      raise car event subscribe_requested with subscriber_role = "vehicle"
-                my_role= "fleet"
-                name_space= "Fleet"
-                name= "Subscription"
-		subscriber_name= name;
+      raise car event "subscribe_requested"
+                with subscriber_role = "vehicle"
+                and my_role = "fleet"
+                and name_space= "Fleet"
+                and name= "Subscription"
+		and subscriber_name = childname 
+              
     }
   }
 

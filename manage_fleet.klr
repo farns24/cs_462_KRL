@@ -67,7 +67,7 @@ ruleset manage_fleet {
     select when car subscribe_requested
 
     pre {
-      new_eci = wrangler:eciFromName(event:attr("subscriber_name"));
+      new_eci = wrangler:lastCreatedEci();
       //log("New ECI " + new_eci);
       sub_attrs = {
         "name": "Vehicle Subscription",

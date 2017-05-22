@@ -37,14 +37,15 @@ ruleset manage_fleet {
     }
     {
       wrangler:createChild(name);
-    }
-    always{
        wrangler:children().map(function(v){
        		if (v.name == name)
 		then {
 			eci = v.eci
 		}
        		});
+    }
+    always{
+      
       log("create child names " + name);
       raise car event subscribe_requested with subscriber_role = "vehicle"
                 subscriber_eci= eci

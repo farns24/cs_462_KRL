@@ -37,7 +37,7 @@ ruleset manage_fleet {
     }
     {
       wrangler:createChild(childname);
-      //log(child); 
+      log(wrangler:lastCreatedEci()); 
     }
     always{
       log("create child names " + name);

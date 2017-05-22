@@ -33,13 +33,24 @@ ruleset manage_fleet {
     pre{
       random_name = "Vehicle_" + math:random(999);
       name = event:attr("name").defaultsTo(random_name);
+      eci = "default"
     }
     {
       wrangler:createChild(name);
     }
     always{
+       wrangler:children().map(function(v){
+       		if (v.name == name)
+		then {
+			eci = v.eci
+		}
+       		});
       log("create child names " + name);
-      //raise car event subscribe_requested 
+      raise car event subscribe_requested with subscriber_role = "vehicle"
+                subscriber_eci= eci
+                my_role= "fleet"
+                name_space= "Fleet"
+                name= "Subscription
     }
   }
 

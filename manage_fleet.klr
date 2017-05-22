@@ -42,11 +42,7 @@ ruleset manage_fleet {
     always{
       log("create child names " + name);
       raise car event "subscribe_requested"
-                with subscriber_role = "vehicle"
-                and my_role = "fleet"
-                and name_space= "Fleet"
-                and name= "Subscription"
-		and subscriber_name = childname 
+                with subscriber_name = childname 
               
     }
   }
@@ -74,10 +70,10 @@ ruleset manage_fleet {
       new_eci = wrangler:eciFromName(event:attr("subscriber_name"));
       //log("New ECI " + new_eci);
       sub_attrs = {
-        "name": event:attr("name"),
+        "name": "Vehicle Subscription",
 	"name_space": "Fleet",
-	"my_role": event:attr("my_role"),
-	"subscriber_role": event:attr("subscriber_role"),
+	"my_role": "Fleet",
+	"subscriber_role": "Vehicle",
 	"subscriber_eci": new_eci
       };
     }

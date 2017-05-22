@@ -40,13 +40,12 @@ ruleset manage_fleet {
       log(child); 
     }
     always{
-      
       log("create child names " + name);
       raise car event subscribe_requested with subscriber_role = "vehicle"
                 subscriber_name= name
                 my_role= "fleet"
                 name_space= "Fleet"
-                name= "Subscription
+                name= "Subscription;
     }
   }
 

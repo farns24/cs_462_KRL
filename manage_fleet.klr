@@ -42,7 +42,10 @@ ruleset manage_fleet {
     always{
       log("create child names " + name);
       raise car event "subscribe_requested"
-                with subscriber_name = childname 
+                with subscriber_name = childname;
+      raise car event "track_trips_install"
+                with name = childname
+		and rid =  "track_trips"
               
     }
   }

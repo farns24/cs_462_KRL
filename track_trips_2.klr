@@ -4,7 +4,7 @@ ruleset track_trips {
     author "Michael Farnsworth"
     description <<tracktrips>>
     logging on
-    shares hello
+    sharing on
   }
   
   global {

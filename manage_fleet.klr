@@ -1,66 +1,135 @@
 ruleset manage_fleet {
-  meta {
-    use module v1_wrangler alias wrangler
-    name "Fleet Manager"
-    description <<
-A first ruleset for the Quickstart
->>
-    author "Michael Farnsworth"
-    logging on
-    sharing on
-  }
-  
-  global {
-     
-    parent = function(){
-      ent:parent.defaultsTo({})
-    }
 
-    vehicles = function() {
-        //Share subscription of all known vehicles
-         wrangler:children();
-    }
+  meta {
+    name "Fleet Manager"
     
-    trips = function() {
-    
-    }
-    
+    description "Ruleset for Project 7"
+
+    author "Michael Farnsworth"
+
+    use module v1_wrangler alias wrangler
+
+    sharing on
+
+    provides showVehicles
+
   }
+
+  global {
+
+    showVehicles = function() {
+      wrangler:children();
+    }
+    
+    subs = function() {
+       subs = wrangler:subscriptions(null, "name_space", "Closet");
+       subs{"subscriptions"}
+    }
   
+  }
+
   rule create_vehicle {
     select when car new_vehicle
-    pre {
-       vid = ent:vId.defaultsTo(0);
-       random_name = "Vehicle_" +  vid;
-       name  = event:attr("name").defaultsTo(random_name);
+    pre{
+      random_name = "Vehicle_" + math:random(999);
+      name = event:attr("name").defaultsTo(random_name);
     }
-    
-        wrangler:createChild(name) 
+    {
+      wrangler:createChild(name);
+    }
     always{
-       log("create vehicle" + name);
-    ent:vId := vid +1;
+      log("create child names " + name);
+    }
+  }
+
+  rule delete_vehicle {
+    select when car unneeded_vehicle
+    pre {
+      name = event:attr("name");
+    }
+    if(not name.isnull()) then {
+      wrangler:deleteChild(name)
+    }
+    fired {
+      log "Deleted child named " + name;
+    } else {
+      log "No child named " + name;
     }
 
   }
 
-  
-  rule delete_vehicle {
-    select when car unneeded_vehicle
-    
-     pre {
-        name = event:attr("name");
-     }
-     if (not name.isnull()) then 
-         wrangler:deleteChild(name)
-     
-     fired {
-        log(name + " deleted");
-     }
-     else
-     {
-         log("No child named " + name);
-     }
+   rule introduce_myself {
+    select when pico_systems introduction_requested
 
+    pre {
+      sub_attrs = {
+        "name": event:attr("name"),
+	"name_space": "Closet",
+	"my_role": event:attr("my_role"),
+	"subscriber_role": event:attr("subscriber_role"),
+	"subscriber_eci": event:attr("subscriber_eci")
+      };
     }
+    if ( not sub_attrs{"name"}.isnull()
+      && not sub_attrs{"subscriber_eci"}.isnull()
+       ) then
+       send_directive("subscription_introduction_sent")
+  	  with options = sub_attrs
+    fired {
+      raise wrangler event 'subscription' attributes sub_attrs;
+      log "subcription introduction made"
+    } else {
+      log "missing required attributes " + sub_attr.encode()
+    }
+       
+  }
 
- }
+  rule approve_subscription {
+      select when pico_systems subscription_approval_requested
+      pre {
+        pending_sub_name = event:attr("sub_name");
+      }
+      if ( not pending_sub_name.isnull()
+         ) then
+         send_directive("subscription_approved")
+           with options = {"pending_sub_name" : pending_sub_name
+   	                  }
+     fired {
+       raise wrangler event 'pending_subscription_approval'
+             with channel_name = pending_sub_name;
+       log "Approving subscription " + pending_sub_name;
+     } else {
+       log "No subscription name provided"
+     }
+  }
+
+  rule remove_subscription {
+      select when pico_systems subscription_deletion_requested
+      pre {
+        pending_sub_name = event:attr("sub_name");
+      }
+      if ( not pending_sub_name.isnull()
+         ) then
+         send_directive("subscription_approved")
+           with options = {"pending_sub_name" : pending_sub_name
+   	                  }
+     fired {
+       raise wrangler event 'subscription_cancellation'
+             with channel_name = pending_sub_name;
+       log "Approving subscription " + pending_sub_name;
+     } else {
+       log "No subscription name provided"
+     }
+  }
+
+  rule installRulesetInChild {
+    select when car track_trips_install
+    pre {
+      rid = event:attr("rid");
+      pico_name = event:attr("name");
+    }
+    wrangler:installRulesets(rid) with
+      name = pico_name
+  }
+
+}

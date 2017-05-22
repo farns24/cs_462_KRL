@@ -84,7 +84,8 @@ ruleset manage_fleet {
   	  with options = sub_attrs
     fired {
       raise wrangler event 'subscription' attributes sub_attrs;
-      log "subcription introduction made"
+      log "subcription introduction made";
+      raise car event "subscription_approved"
     } else {
       log "missing required attributes " + sub_attr.encode()
     }
@@ -92,9 +93,9 @@ ruleset manage_fleet {
   }
 
   rule approve_subscription {
-      select when pico_systems subscription_approval_requested
+      select when car subscription_approved
       pre {
-        pending_sub_name = event:attr("sub_name");
+        pending_sub_name = "Vehicle Subscription";//event:attr("sub_name");
       }
       if ( not pending_sub_name.isnull()
          ) then

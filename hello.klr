@@ -1,33 +1,164 @@
-ruleset hello_world {
+ruleset manage_fleet {
+
   meta {
-    name "Hello World"
-    description <<
-A first ruleset for the Quickstart
->>
+    name "Fleet Manager"
+    
+    description "Ruleset for Project 7"
+
     author "Michael Farnsworth"
-    logging on
-    shares hello
+
+    use module v1_wrangler alias wrangler
+
+    sharing on
+
+    provides vehicles, trips
+
   }
-  
+
   global {
-    hello = function(obj) {
-      msg = "Hello " + obj;
-      msg
+
+    vehicles = function() {
+      wrangler:children();
     }
-  }
+    
+    trips = function() {
+        res = [];
+    	wrangler:children().map(function(v){
+		res.append(v:trips());
+	});
+	
+    }
+    
+    subs = function() {
+       subs = wrangler:subscriptions(null, "Fleet", "Vehicle Subscription");
+       subs{"subscriptions"}
+    }
   
-  rule hello_world {
-    select when echo hello
-    send_directive("say") with
-      something = "Hello World"
   }
 
-  rule message {
-    select when echo message input re#(.*)# setting(m);
-  send_directive("say") with
-    something = m
+  rule generate_report {
+     select when fleet get_report
+     pre {
+       subscriptions = subs();
+       //log (subscriptions.encode());
+     }
+     send_directive("subscriptions") with
+            subs = subscriptions
+  }
+
+  rule create_vehicle {
+    select when car new_vehicle
+    pre{
+      random_name = "Vehicle_" + math:random(999);
+      childname = event:attr("name").defaultsTo(random_name);
+      
+    }
+    {
+      wrangler:createChild(childname);
+      //log(wrangler:lastCreatedEci()); 
+    }
+    always{
+      log("create child names " + name);
+      raise car event "subscribe_requested"
+                with subscriber_name = childname;
+      raise car event "track_trips_install"
+                with name = childname
+		and rid =  "track_trips"
+              
+    }
+  }
+
+  rule delete_vehicle {
+    select when car unneeded_vehicle
+    pre {
+      name = event:attr("name");
+    }
+    if(not name.isnull()) then {
+      wrangler:deleteChild(name)
+    }
+    fired {
+      log "Deleted child named " + name;
+    } else {
+      log "No child named " + name;
     }
 
+  }
 
- }
+   rule introduce_myself {
+    select when car subscribe_requested
 
+    pre {
+      new_eci = wrangler:lastCreatedEci();
+      //log("New ECI " + new_eci);
+      sub_attrs = {
+        "name": "Vehicle Subscription",
+	"name_space": "Fleet",
+	"my_role": "Fleet",
+	"subscriber_role": "Vehicle",
+	"subscriber_eci": new_eci
+      };
+    }
+    if ( not sub_attrs{"name"}.isnull()
+      && not sub_attrs{"subscriber_eci"}.isnull()
+       ) then
+       send_directive("subscription_introduction_sent")
+  	  with options = sub_attrs
+    fired {
+      raise wrangler event 'subscription' attributes sub_attrs;
+      log "subcription introduction made";
+      raise car event "subscription_approved"
+    } else {
+      log "missing required attributes " + sub_attr.encode()
+    }
+       
+  }
+
+  rule approve_subscription {
+      select when car subscription_approved
+      pre {
+        pending_sub_name = "Vehicle Subscription";//event:attr("sub_name");
+      }
+      if ( not pending_sub_name.isnull()
+         ) then
+         send_directive("subscription_approved")
+           with options = {"pending_sub_name" : pending_sub_name
+   	                  }
+     fired {
+       raise wrangler event 'pending_subscription_approval'
+             with channel_name = pending_sub_name;
+       log "Approving subscription " + pending_sub_name;
+     } else {
+       log "No subscription name provided"
+     }
+  }
+
+  rule remove_subscription {
+      select when pico_systems subscription_deletion_requested
+      pre {
+        pending_sub_name = event:attr("sub_name");
+      }
+      if ( not pending_sub_name.isnull()
+         ) then
+         send_directive("subscription_approved")
+           with options = {"pending_sub_name" : pending_sub_name
+   	                  }
+     fired {
+       raise wrangler event 'subscription_cancellation'
+             with channel_name = pending_sub_name;
+       log "Approving subscription " + pending_sub_name;
+     } else {
+       log "No subscription name provided"
+     }
+  }
+
+  rule installRulesetInChild {
+    select when car track_trips_install
+    pre {
+      rid = event:attr("rid");
+      pico_name = event:attr("name");
+    }
+    wrangler:installRulesets(rid) with
+      name = pico_name
+  }
+
+}

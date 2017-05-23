@@ -30,10 +30,18 @@ ruleset manage_fleet {
     }
     
     subs = function() {
-       subs = wrangler:subscriptions(null, "name_space", "Closet");
+       subs = wrangler:subscriptions(null, "Fleet", "Vehicle Subscription");
        subs{"subscriptions"}
     }
   
+  }
+
+  rule generate_report {
+     select when fleet get_report
+     pre {
+       subscriptions = subs();
+       log subscriptions.encode();
+     }
   }
 
   rule create_vehicle {
@@ -45,7 +53,7 @@ ruleset manage_fleet {
     }
     {
       wrangler:createChild(childname);
-      log(wrangler:lastCreatedEci()); 
+      //log(wrangler:lastCreatedEci()); 
     }
     always{
       log("create child names " + name);

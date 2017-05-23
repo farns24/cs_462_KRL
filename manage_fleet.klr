@@ -40,8 +40,10 @@ ruleset manage_fleet {
      select when fleet get_report
      pre {
        subscriptions = subs();
-       log subscriptions.encode();
+       
      }
+     send_directive("subscriptions") with
+            subs = subscriptions
   }
 
   rule create_vehicle {

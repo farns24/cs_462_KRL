@@ -11,14 +11,22 @@ ruleset manage_fleet {
 
     sharing on
 
-    provides showVehicles
+    provides vehicles, trips
 
   }
 
   global {
 
-    showVehicles = function() {
+    vehicles = function() {
       wrangler:children();
+    }
+    
+    trips = function() {
+        res = [];
+    	wrangler:children().map(function(v){
+		res.append(v:trips());
+	});
+	
     }
     
     subs = function() {

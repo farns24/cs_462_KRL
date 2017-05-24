@@ -39,7 +39,7 @@ ruleset manage_fleet {
   rule generate_report {
      select when fleet get_report
      pre {
-       subscriptions = subs();
+       subscriptions = vehicles();
        
      }
      send_directive("subscriptions") with

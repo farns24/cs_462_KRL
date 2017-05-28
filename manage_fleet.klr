@@ -1,164 +1,168 @@
 ruleset manage_fleet {
-
   meta {
+    use module Subscriptions
+    use module io.picolabs.pico alias wrangler
     name "Fleet Manager"
-    
-    description "Ruleset for Project 7"
-
+    description <<
+A first ruleset for the Quickstart
+>>
     author "Michael Farnsworth"
-
-    use module v1_wrangler alias wrangler
-
-    sharing on
-
-    provides vehicles, trips
-
+    logging on
+    provides children, vehicles, myself,trips
+    shares vehicles, children, myself,trips
   }
-
+  
   global {
+     
+
+    cloud_url = "http://localhost:8080/sky/cloud/";
+ 
+cloud = function(eci, mod, func, params) {
+     http:get("http://localhost:8080/sky/cloud/" +eci+ "/"+ mod +"/" + func)["content"].decode();
+   }
+    parent = function(){
+      ent:parent.defaultsTo({})
+    }
 
     vehicles = function() {
-      wrangler:children();
+        Subscriptions:getSubscriptions() 
+    }
+
+    myself = function() {
+        wrangler:myself()
+    }
+    
+    children = function() {
+        wrangler:children()
     }
     
     trips = function() {
-        res = [];
-    	wrangler:children().map(function(v){
-		res.append(v:trips());
-	});
-	
+         response = [];
+         vehicles().map(function(v,k){
+         res =cloud(v{"attributes"}{"subscriber_eci"},"trip_store","trips",{}).klog(res);
+         response.append([res]);
+            });
+
+
+    response
     }
     
-    subs = function() {
-       subs = wrangler:subscriptions(null, "Fleet", "Vehicle Subscription");
-       subs{"subscriptions"}
-    }
-  
   }
 
-  rule generate_report {
-     select when fleet get_report
-     pre {
-       subscriptions = vehicles();
-       
-     }
-     send_directive("subscriptions") with
-            subs = subscriptions
+  rule request_report {
+  select when fleet request_report
+  pre {
+   past5 = ent:past5.defaultsTo([{},{},{},{},{}]);
+   past5 = past5.tail();
+   col = ent:collected.defaultsTo({});
+   past5 = past5.append([col])
+  }
+  always {
+        fleet_count =  vehicles().length();
+        ent:collected := {"fleet":{}, "Vehicles": fleet_count, "Responding": 0 };
+
+
+        raise fleet event "build_report" 
+        attributes event:attrs();
+         ent:past5 := past5;
+    }
+
+   }
+
+  rule build_report{
+  select when fleet build_report
+      foreach vehicles() setting(v,k)
+       event:send({ "eci":v{"attributes"}{"subscriber_eci"} , "eid": 1313,
+                 "domain": "car", "type": "build_report",
+                  "attrs": {"parent" : myself(){"eci"}}
+                  })
+       always{
+          schedule fleet event "report_complete" at time:add(time:now(), {"seconds": 5})
+       }
+      
+  }
+  
+  rule collect_report {
+      select when fleet collect_report
+      pre{
+        fleet_count =  vehicles().length();
+        collected = ent:collected.defaultsTo({"fleet":{}, "Vehicles": fleet_count, "Responding": 0 });
+        responded = collected{"fleet"};
+        responded{event:attr("node")} = event:attr("trips");
+        collected{"Responding"} = responded.keys().length();
+        collected{"fleet"} = responded;
+      }
+      
+      always{
+          ent:collected := collected;
+
+          raise fleet event "report_complete"
+          attributes {"report" : collected.encode()} if (responded.keys().length() ==fleet_count); 
+      
+        
+      }
+   }
+   
+  rule report_complete
+  {
+      select when fleet report_complete
+      send_directive("say") with
+         something = ent:collected.encode()
+
   }
 
   rule create_vehicle {
     select when car new_vehicle
-    pre{
-      random_name = "Vehicle_" + math:random(999);
-      childname = event:attr("name").defaultsTo(random_name);
-      
+
+    pre {
+       vid = ent:vId.defaultsTo(0);
+       random_name = "Vehicle_" +  vid;
+       name  = random_name;
     }
-    {
-      wrangler:createChild(childname);
-      //log(wrangler:lastCreatedEci()); 
-    }
-    always{
-      log("create child names " + name);
-      raise car event "subscribe_requested"
-                with subscriber_name = childname;
-      raise car event "track_trips_install"
-                with name = childname
-		and rid =  "track_trips"
-              
-    }
+    
+    always{ 
+       raise pico event "new_child_request";
+
+          }
+
   }
 
+
+   rule subscribe_me{
+     select when fleet Subscribe
+    always{
+      c = children().klog(c);
+       last = c[c.length()-1];
+           raise wrangler event "subscription"
+              attributes {
+                "name" : "V "+ c.length(),
+                "name_space" :"fleet subscription",
+                "my_role" :"fleet",
+                "subscriber_role" :"vehicle",
+                "channel_type" :"subscription",
+               "subscriber_eci" : last{"eci"}};
+           
+    
+           ent:vId := vid +1;
+           myAttr = {"cid":last{"eci"}};
+       
+           raise pico event "ruleset_added" 
+               attributes  {"rid" : "track_trips",
+                             "base": last{"eci"}};
+       }
+   }
+
+  
   rule delete_vehicle {
     select when car unneeded_vehicle
-    pre {
-      name = event:attr("name");
-    }
-    if(not name.isnull()) then {
-      wrangler:deleteChild(name)
-    }
-    fired {
-      log "Deleted child named " + name;
-    } else {
-      log "No child named " + name;
-    }
-
-  }
-
-   rule introduce_myself {
-    select when car subscribe_requested
-
-    pre {
-      new_eci = wrangler:lastCreatedEci();
-      //log("New ECI " + new_eci);
-      sub_attrs = {
-        "name": "Vehicle Subscription",
-	"name_space": "Fleet",
-	"my_role": "Fleet",
-	"subscriber_role": "Vehicle",
-	"subscriber_eci": new_eci
-      };
-    }
-    if ( not sub_attrs{"name"}.isnull()
-      && not sub_attrs{"subscriber_eci"}.isnull()
-       ) then
-       send_directive("subscription_introduction_sent")
-  	  with options = sub_attrs
-    fired {
-      raise wrangler event 'subscription' attributes sub_attrs;
-      log "subcription introduction made";
-      raise car event "subscription_approved"
-    } else {
-      log "missing required attributes " + sub_attr.encode()
-    }
-       
-  }
-
-  rule approve_subscription {
-      select when car subscription_approved
-      pre {
-        pending_sub_name = "Vehicle Subscription";//event:attr("sub_name");
-      }
-      if ( not pending_sub_name.isnull()
-         ) then
-         send_directive("subscription_approved")
-           with options = {"pending_sub_name" : pending_sub_name
-   	                  }
-     fired {
-       raise wrangler event 'pending_subscription_approval'
-             with channel_name = pending_sub_name;
-       log "Approving subscription " + pending_sub_name;
-     } else {
-       log "No subscription name provided"
+     
+     always{
+      
+        raise pico  event "delete_child_request"
+        attributes event:attrs();
      }
-  }
+     
 
-  rule remove_subscription {
-      select when pico_systems subscription_deletion_requested
-      pre {
-        pending_sub_name = event:attr("sub_name");
-      }
-      if ( not pending_sub_name.isnull()
-         ) then
-         send_directive("subscription_approved")
-           with options = {"pending_sub_name" : pending_sub_name
-   	                  }
-     fired {
-       raise wrangler event 'subscription_cancellation'
-             with channel_name = pending_sub_name;
-       log "Approving subscription " + pending_sub_name;
-     } else {
-       log "No subscription name provided"
-     }
-  }
-
-  rule installRulesetInChild {
-    select when car track_trips_install
-    pre {
-      rid = event:attr("rid");
-      pico_name = event:attr("name");
     }
-    wrangler:installRulesets(rid) with
-      name = pico_name
-  }
 
-}
+ }
